@@ -104,13 +104,24 @@ class CaptionTSVDataset(Dataset):
     def get_image_key(self, idx):
         img_idx = self.get_image_index(idx)
         return self.image_keys[img_idx]
-
+    
     def get_image_features(self, img_idx):
-        feat_info = json.loads(self.feat_tsv.seek(img_idx)[1])
+        # Updated to format json appropriately
+        dict_str = self.feat_tsv.seek(img_idx)[1]
+        dict_str = dict_str.replace('"', '"""')
+        dict_str = dict_str.replace("'", '"')
+        feat_info = json.loads(dict_str)
         num_boxes = feat_info['num_boxes']
         features = np.frombuffer(base64.b64decode(feat_info['features']), np.float32
-                ).reshape((num_boxes, -1))
+                                ).reshape((num_boxes, -1))
         return torch.Tensor(features)
+
+#     def get_image_features(self, img_idx):
+#         feat_info = json.loads(self.feat_tsv.seek(img_idx)[1])
+#         num_boxes = feat_info['num_boxes']
+#         features = np.frombuffer(base64.b64decode(feat_info['features']), np.float32
+#                 ).reshape((num_boxes, -1))
+#         return torch.Tensor(features)
 
     def get_caption(self, idx):
         if self.is_train:
